@@ -1,5 +1,5 @@
 import type { Project } from '@/types/imgui';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { createProject } from '@/lib/storage';
 import Icon from '@/components/ui/icon';
 
@@ -15,6 +15,8 @@ export default function ProjectsPanel({ projects, activeId, onSelect, onSave, on
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState('');
   const [desc, setDesc] = useState('');
+  const [importError, setImportError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleCreate = () => {
     if (!name.trim()) return;
@@ -27,18 +29,85 @@ export default function ProjectsPanel({ projects, activeId, onSelect, onSave, on
     setCreating(false);
   };
 
+  const handleExport = (p: Project, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const json = JSON.stringify(p, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${p.name.replace(/\s+/g, '_')}.imgui.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportClick = () => {
+    setImportError(null);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target?.result as string) as Project;
+        if (!data.id || !data.name || !data.menu) throw new Error('Неверный формат файла');
+        const imported: Project = {
+          ...data,
+          id: crypto.randomUUID(),
+          name: data.name,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        const updated = [...projects, imported];
+        onSave(updated);
+        onSelect(imported);
+        setImportError(null);
+      } catch {
+        setImportError('Ошибка: неверный .imgui.json файл');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-3 py-2 border-b border-border">
         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Проекты</span>
-        <button
-          onClick={() => setCreating(true)}
-          className="p-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-          title="Новый проект"
-        >
-          <Icon name="Plus" size={14} />
-        </button>
+        <div className="flex items-center gap-0.5">
+          <button
+            onClick={handleImportClick}
+            className="p-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+            title="Импорт из JSON"
+          >
+            <Icon name="Upload" size={13} />
+          </button>
+          <button
+            onClick={() => setCreating(true)}
+            className="p-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+            title="Новый проект"
+          >
+            <Icon name="Plus" size={14} />
+          </button>
+        </div>
       </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json,.imgui.json"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
+      {importError && (
+        <div className="mx-3 mt-2 px-2 py-1.5 rounded border border-destructive/40 bg-destructive/10 animate-fade-in">
+          <p className="text-xs text-destructive font-mono">{importError}</p>
+        </div>
+      )}
 
       {creating && (
         <div className="p-3 border-b border-border bg-[hsl(var(--editor-bg))] animate-fade-in">
@@ -102,15 +171,37 @@ export default function ProjectsPanel({ projects, activeId, onSelect, onSave, on
                 {p.menu.tabs.length} вкл · {p.menu.tabs.reduce((acc, t) => acc + t.elements.length, 0)} эл.
               </p>
             </div>
-            <button
-              onClick={e => { e.stopPropagation(); onDelete(p.id); }}
-              className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-all ml-2 shrink-0"
-            >
-              <Icon name="Trash2" size={12} />
-            </button>
+            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all ml-2 shrink-0">
+              <button
+                onClick={e => handleExport(p, e)}
+                className="p-1 rounded hover:bg-primary/20 text-muted-foreground hover:text-primary transition-colors"
+                title="Экспорт в JSON"
+              >
+                <Icon name="Download" size={12} />
+              </button>
+              <button
+                onClick={e => { e.stopPropagation(); onDelete(p.id); }}
+                className="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+                title="Удалить"
+              >
+                <Icon name="Trash2" size={12} />
+              </button>
+            </div>
           </div>
         ))}
       </div>
+
+      {projects.length > 0 && (
+        <div className="px-3 py-2 border-t border-border">
+          <button
+            onClick={handleImportClick}
+            className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs border border-dashed border-border rounded text-muted-foreground hover:text-primary hover:border-primary transition-colors font-mono"
+          >
+            <Icon name="Upload" size={11} />
+            Импортировать .json
+          </button>
+        </div>
+      )}
     </div>
   );
 }
