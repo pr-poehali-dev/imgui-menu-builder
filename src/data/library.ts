@@ -1,0 +1,88 @@
+import type { LibraryItem } from '@/types/imgui';
+
+export const LIBRARY_ITEMS: LibraryItem[] = [
+  {
+    type: 'button',
+    label: 'Button',
+    description: 'Кнопка с обработчиком клика',
+    icon: 'MousePointerClick',
+    defaultProps: { color: 'default' },
+  },
+  {
+    type: 'checkbox',
+    label: 'Checkbox',
+    description: 'Переключатель вкл/выкл',
+    icon: 'CheckSquare',
+    defaultProps: { checked: false },
+  },
+  {
+    type: 'slider',
+    label: 'Slider',
+    description: 'Ползунок значения',
+    icon: 'SlidersHorizontal',
+    defaultProps: { min: 0, max: 100, value: 50 },
+  },
+  {
+    type: 'text',
+    label: 'Text',
+    description: 'Статичный текст',
+    icon: 'Type',
+    defaultProps: { style: 'normal' },
+  },
+  {
+    type: 'separator',
+    label: 'Separator',
+    description: 'Горизонтальный разделитель',
+    icon: 'Minus',
+    defaultProps: {},
+  },
+  {
+    type: 'input',
+    label: 'Input',
+    description: 'Поле ввода текста',
+    icon: 'TextCursor',
+    defaultProps: { placeholder: '' },
+  },
+  {
+    type: 'combo',
+    label: 'Combo',
+    description: 'Выпадающий список',
+    icon: 'ChevronDown',
+    defaultProps: { items: ['Option 1', 'Option 2', 'Option 3'] },
+  },
+  {
+    type: 'collapser',
+    label: 'CollapsingHeader',
+    description: 'Сворачиваемая секция',
+    icon: 'ChevronsUpDown',
+    defaultProps: {},
+  },
+  {
+    type: 'treenode',
+    label: 'TreeNode',
+    description: 'Узел дерева',
+    icon: 'FolderTree',
+    defaultProps: {},
+  },
+  {
+    type: 'colorpicker',
+    label: 'ColorEdit4',
+    description: 'Выбор цвета RGBA',
+    icon: 'Palette',
+    defaultProps: { value: '#ff0000ff' },
+  },
+  {
+    type: 'progressbar',
+    label: 'ProgressBar',
+    description: 'Полоса прогресса',
+    icon: 'GaugeCircle',
+    defaultProps: { value: 0.5 },
+  },
+  {
+    type: 'listbox',
+    label: 'ListBox',
+    description: 'Список с выбором',
+    icon: 'List',
+    defaultProps: { items: ['Item 1', 'Item 2', 'Item 3'] },
+  },
+];
